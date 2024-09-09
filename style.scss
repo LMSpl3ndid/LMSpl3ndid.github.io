@@ -359,10 +359,10 @@ img {
   }
 
   .site-avatar {
-    margin:auto auto;
+    margin:0 auto;
     display: block;
-    max-width: 200px;
-    max-height: 200px;
+    max-width: 100px;
+    max-height: 100px;
 
     @include mobile {
       max-width: 120px;
