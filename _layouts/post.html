@@ -32,17 +32,33 @@ layout: default
   {% include gitalk.html %}
 </article>
 
+{% assign previous_visible = nil %}
+{% assign next_visible = nil %}
+{% assign found_current = false %}
+{% for post in site.posts %}
+  {% unless post.hidden %}
+    {% if found_current and previous_visible == nil %}
+      {% assign previous_visible = post %}
+    {% endif %}
+    {% if post.url == page.url %}
+      {% assign found_current = true %}
+    {% elsif found_current == false %}
+      {% assign next_visible = post %}
+    {% endif %}
+  {% endunless %}
+{% endfor %}
+
 <div class="pagination">
-  {% if page.previous.url %}
+  {% if previous_visible.url %}
     <span class="prev" >
-      <a href="{{ site.url }}{{ site.baseurl }}{{ page.previous.url }}">
+      <a href="{{ site.url }}{{ site.baseurl }}{{ previous_visible.url }}">
         ← 上一篇
       </a>
     </span>
   {% endif %}
-  {% if page.next.url %}
+  {% if next_visible.url %}
     <span class="next" >
-      <a href="{{ site.url }}{{ site.baseurl }}{{ page.next.url }}">
+      <a href="{{ site.url }}{{ site.baseurl }}{{ next_visible.url }}">
         下一篇 →
       </a>
     </span>

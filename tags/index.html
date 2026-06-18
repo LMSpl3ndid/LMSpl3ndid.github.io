@@ -11,21 +11,26 @@ permalink: /tags/
 <div class="tags">
   <ul class="label">
     {% for tag in site.tags %}
-    <li>
-      <a href="#{{ tag[0] }}">
-        <span>{{ tag[0] }}</span>
-        <span class="count">{{ tag[1] | size }}</span>
-      </a>
-    </li>
+    {% assign tag_posts = tag[1] | where_exp: "post", "post.hidden != true" %}
+      {% if tag_posts.size > 0 %}
+      <li>
+        <a href="#{{ tag[0] }}">
+          <span>{{ tag[0] }}</span>
+          <span class="count">{{ tag_posts | size }}</span>
+        </a>
+      </li>
+      {% endif %}
     {% endfor %}
   </ul>
 
   {% for tag in site.tags %}
+  {% assign tag_posts = tag[1] | where_exp: "post", "post.hidden != true" %}
+  {% if tag_posts.size > 0 %}
     <h2 id="{{ tag[0] }}">
       {{ tag[0] }}
     </h2>
     <ul class="tag">
-      {% for post in tag[1] %}
+      {% for post in tag_posts %}
         {% if post.title != null %}
           <li>
             {% if post.link %}
@@ -40,5 +45,6 @@ permalink: /tags/
         {% endif %}
       {% endfor %}
     </ul>
+  {% endif %}
   {% endfor %}
 </div>
