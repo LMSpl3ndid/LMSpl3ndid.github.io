@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="一张可探索、可记录的世界音乐地图。">
+  <title>声场 Atlas | 世界音乐地图</title>
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <style>
+    :root { --ink:#18211d; --muted:#66716b; --paper:#f6f8f2; --line:#d6ddd2; --panel:#ffffff; --green:#1e6f50; --coral:#cf5b43; --yellow:#d9a735; --blue:#2a728c; --soft-green:#dcebe1; --soft-coral:#f8e5df; --shadow:0 12px 32px rgba(24,33,29,.10); }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; color:var(--ink); background:var(--paper); }
+    button, textarea { font:inherit; }
+    button { cursor:pointer; }
+    .site-head { display:flex; justify-content:space-between; align-items:center; gap:24px; padding:22px clamp(20px,4vw,56px); background:var(--panel); border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:baseline; gap:12px; min-width:0; }
+    .brand h1 { margin:0; font-size:22px; letter-spacing:0; font-weight:650; white-space:nowrap; }
+    .brand span { color:var(--muted); font-size:14px; }
+    .head-actions { display:flex; gap:8px; align-items:center; }
+    .icon-button { display:grid; place-items:center; width:36px; height:36px; border:1px solid var(--line); border-radius:6px; color:var(--ink); background:var(--panel); }
+    .icon-button:hover { color:var(--green); border-color:var(--green); }
+    .icon-button svg { width:17px; height:17px; }
+    main { max-width:1500px; margin:0 auto; padding:clamp(24px,4vw,54px); }
+    .intro { display:flex; justify-content:space-between; align-items:end; gap:28px; margin-bottom:28px; }
+    .eyebrow { margin:0 0 8px; color:var(--green); font-size:12px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase; }
+    .intro h2 { max-width:760px; margin:0; font-size:clamp(28px,4vw,46px); line-height:1.15; font-weight:650; letter-spacing:0; }
+    .intro p:last-child { max-width:310px; margin:0; color:var(--muted); font-size:14px; line-height:1.65; }
+    .layout { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(320px,.72fr); gap:28px; align-items:start; }
+    .map-area { position:relative; min-height:590px; background:var(--panel); border:1px solid var(--line); border-radius:8px; overflow:hidden; box-shadow:var(--shadow); }
+    #map { display:block; width:100%; min-height:590px; background:#edf4ee; }
+    .country { fill:#d7e1d8; stroke:#fff; stroke-width:.55px; transition:fill .14s ease, opacity .14s ease; }
+    .country.has-entry { fill:#b9d9c4; cursor:pointer; }
+    .country.has-entry:hover, .country.has-entry.selected { fill:var(--coral); }
+    .country.unavailable { opacity:.72; }
+    .map-key { position:absolute; bottom:16px; left:18px; display:flex; align-items:center; gap:10px; padding:9px 11px; border:1px solid var(--line); border-radius:5px; background:rgba(255,255,255,.92); font-size:12px; color:var(--muted); }
+    .swatch { width:10px; height:10px; background:#b9d9c4; border-radius:50%; }
+    .hover-card { position:absolute; z-index:2; width:min(290px,calc(100% - 28px)); padding:15px 16px; pointer-events:none; border:1px solid var(--line); border-radius:7px; background:var(--panel); box-shadow:var(--shadow); opacity:0; transform:translateY(6px); transition:opacity .12s, transform .12s; }
+    .hover-card.show { opacity:1; transform:translateY(0); }
+    .hover-card strong { display:block; margin-bottom:4px; font-size:15px; }
+    .hover-card span { display:block; color:var(--muted); font-size:12px; line-height:1.45; }
+    .detail { min-height:590px; background:var(--panel); border:1px solid var(--line); border-radius:8px; box-shadow:var(--shadow); overflow:hidden; }
+    .detail-top { padding:24px 24px 18px; border-bottom:1px solid var(--line); }
+    .detail-top .region { margin:0 0 7px; color:var(--green); font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase; }
+    .detail-top h3 { margin:0; font-size:27px; line-height:1.2; letter-spacing:0; }
+    .detail-top .note { margin:10px 0 0; color:var(--muted); font-size:13px; line-height:1.55; }
+    .albums { padding:8px 0; }
+    .album { padding:18px 24px 20px; border-bottom:1px solid var(--line); }
+    .album:last-child { border-bottom:0; }
+    .album-meta { display:flex; gap:11px; align-items:flex-start; }
+    .album-mark { flex:0 0 34px; height:34px; display:grid; place-items:center; margin-top:2px; border-radius:5px; color:var(--panel); background:var(--green); }
+    .album:nth-child(2) .album-mark { background:var(--coral); }
+    .album:nth-child(3) .album-mark { background:var(--blue); }
+    .album-mark svg { width:16px; }
+    .album-info { min-width:0; flex:1; }
+    .album-title-row { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .album h4 { margin:0; font-size:16px; line-height:1.35; font-weight:650; }
+    .artist { margin:3px 0 0; color:var(--muted); font-size:13px; }
+    .year { flex:0 0 auto; color:var(--muted); font-size:12px; }
+    .tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:10px; }
+    .tag { padding:3px 7px; border-radius:4px; background:var(--soft-green); color:var(--green); font-size:11px; }
+    .review-label { display:flex; align-items:center; justify-content:space-between; gap:10px; margin:15px 0 6px; color:var(--muted); font-size:12px; }
+    .done { display:flex; align-items:center; gap:5px; white-space:nowrap; color:var(--green); }
+    .done input { accent-color:var(--green); }
+    textarea { display:block; width:100%; min-height:52px; resize:vertical; padding:9px 10px; color:var(--ink); border:1px solid var(--line); border-radius:5px; background:#fbfcf9; outline:none; font-size:13px; line-height:1.45; }
+    textarea:focus { border-color:var(--green); box-shadow:0 0 0 3px rgba(30,111,80,.13); }
+    .empty { display:grid; min-height:590px; place-content:center; padding:40px; text-align:center; color:var(--muted); }
+    .empty svg { width:32px; height:32px; margin:0 auto 14px; color:var(--green); }
+    .empty p { max-width:230px; margin:0; line-height:1.6; font-size:14px; }
+    .footer { display:flex; justify-content:space-between; align-items:center; gap:18px; margin-top:25px; color:var(--muted); font-size:12px; }
+    .footer-actions { display:flex; gap:8px; }
+    .text-button { border:0; padding:0; background:none; color:var(--green); font-size:12px; text-decoration:underline; text-underline-offset:3px; }
+    .toast { position:fixed; z-index:3; left:50%; bottom:24px; padding:10px 14px; border-radius:6px; color:#fff; background:var(--ink); box-shadow:var(--shadow); font-size:13px; opacity:0; transform:translate(-50%,10px); pointer-events:none; transition:opacity .18s, transform .18s; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    @media (max-width:900px) { .intro { align-items:start; flex-direction:column; } .layout { grid-template-columns:1fr; } .detail, .empty { min-height:auto; } .empty { min-height:230px; } }
+    @media (max-width:560px) { .site-head { align-items:flex-start; } .brand { flex-direction:column; gap:2px; } .brand span { font-size:12px; } main { padding:24px 16px; } #map, .map-area { min-height:430px; } .detail-top, .album { padding-left:18px; padding-right:18px; } .footer { align-items:flex-start; flex-direction:column; } }
+  </style>
+</head>
+<body>
+  <header class="site-head">
+    <div class="brand"><h1>声场 Atlas</h1><span>你的世界音乐地图</span></div>
+    <div class="head-actions">
+      <button class="icon-button" id="homeButton" type="button" aria-label="回到初始视图" data-tooltip="回到初始视图"><i data-lucide="rotate-ccw" aria-hidden="true"></i></button>
+      <button class="icon-button" id="exportButton" type="button" aria-label="导出我的简评" data-tooltip="导出我的简评"><i data-lucide="download" aria-hidden="true"></i></button>
+      <button class="icon-button" id="importButton" type="button" aria-label="导入我的简评" data-tooltip="导入我的简评"><i data-lucide="upload" aria-hidden="true"></i></button>
+      <input id="importInput" type="file" accept="application/json" hidden>
+    </div>
+  </header>
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div><p class="eyebrow">listen across borders</p><h2 id="page-title">从一张专辑开始，听见世界的来路。</h2></div>
+      <p>选择地图上的绿色地区，沿着音乐人和专辑进入当地场景；每一张都留下一句属于你的判断。</p>
+    </section>
+    <section class="layout" aria-label="世界音乐探索地图">
+      <div class="map-area">
+        <svg id="map" role="img" aria-label="世界地图。绿色国家包含精选音乐入口。"></svg>
+        <div class="map-key"><span class="swatch"></span> 已收录音乐入口</div>
+        <div id="hoverCard" class="hover-card" aria-hidden="true"></div>
+      </div>
+      <aside id="detail" class="detail" aria-live="polite"></aside>
+    </section>
+    <footer class="footer"><span id="progress">0 / 0 张已听</span><div class="footer-actions"><button id="exportText" class="text-button" type="button">导出简评</button><button id="clearText" class="text-button" type="button">清空本地记录</button></div></footer>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script type="module">
+    import { geoNaturalEarth1, geoPath } from 'https://esm.sh/d3-geo@3.1.1';
+    import { feature } from 'https://esm.sh/topojson-client@3.1.0';
+    import world from './assets/countries-110m.json' with { type: 'json' };
+
+    const regions = {
+      '840': ['美国','北美', '从蓝调、爵士到灵魂乐与嘻哈的巨大支流。', [['Kind of Blue','Miles Davis','1959','爵士,冷爵士'],['To Pimp a Butterfly','Kendrick Lamar','2015','嘻哈,灵魂乐'],['Blue','Joni Mitchell','1971','创作歌手,民谣']]],
+      '124': ['加拿大','北美', '民谣、独立摇滚与实验流行在辽阔感里相遇。', [['Blue','Joni Mitchell','1971','民谣,创作歌手'],['The Suburbs','Arcade Fire','2010','独立摇滚,艺术摇滚']]],
+      '484': ['墨西哥','北美', '传统民谣与摇滚、流行之间有长期而热烈的对话。', [['Re','Café Tacvba','1994','另类摇滚,拉丁摇滚'],['El Circo','Maldita Vecindad','1991','ska,拉丁摇滚']]],
+      '192': ['古巴','加勒比', '节奏、钢琴与合唱构成了加勒比音乐的重要根系。', [['Buena Vista Social Club','Buena Vista Social Club','1997','古巴传统,son'],['Introducing… Rubén Blades','Rubén Blades','1986','salsa,拉丁爵士']]],
+      '388': ['牙买加','加勒比', '从 ska 到 reggae，再到 dub，这里重写了低音的意义。', [['Catch a Fire','Bob Marley & The Wailers','1973','reggae,roots'],['King Tubby Meets Rockers Uptown','Augustus Pablo','1976','dub,reggae']]],
+      '076': ['巴西','南美', '桑巴、bossa nova 与热带主义让传统不断向未来延伸。', [['Construção','Chico Buarque','1971','MPB,创作歌手'],['Acabou Chorare','Novos Baianos','1972','tropicália,巴西摇滚'],['Chega de Saudade','João Gilberto','1959','bossa nova,爵士']]],
+      '032': ['阿根廷','南美', '探戈的暗涌与摇滚 nacional 的直白共同塑造了它。', [['El amor después del amor','Fito Páez','1992','拉丁摇滚,流行'],['Libertango','Astor Piazzolla','1974','新探戈,器乐']]],
+      '170': ['哥伦比亚','南美', 'cumbia、vallenato 与当代流行不断交换节拍。', [['Cumbia Sobre el Río','Celso Piña','2001','cumbia,融合'],['Pies Descalzos','Shakira','1995','拉丁流行,摇滚']]],
+      '152': ['智利','南美', '新民歌运动将诗、政治与安第斯乐器放在同一张桌上。', [['Las últimas composiciones','Violeta Parra','1966','新民歌,民谣'],['Alturas de Machu Picchu','Los Jaivas','1981','前卫摇滚,民谣']]],
+      '826': ['英国','欧洲', '朋克、后朋克、电子与流行的许多分岔，都在这里发芽。', [['The Queen Is Dead','The Smiths','1986','独立摇滚,后朋克'],['Blue Lines','Massive Attack','1991','trip-hop,电子'],['London Calling','The Clash','1979','朋克,摇滚']]],
+      '372': ['爱尔兰','欧洲', '凯尔特传统与阴郁、宽阔的摇滚语汇彼此映照。', [['Astral Weeks','Van Morrison','1968','民谣摇滚,灵魂乐'],['The Lion and the Cobra','Sinéad O’Connor','1987','另类摇滚,艺术流行']]],
+      '250': ['法国','欧洲', '香颂、电子和前卫流行之间的距离比想象中更近。', [['Histoire de Melody Nelson','Serge Gainsbourg','1971','香颂,艺术流行'],['Discovery','Daft Punk','2001','法式浩室,电子']]],
+      '276': ['德国','欧洲', '从 krautrock 到 techno，这里总把机器变成身体的一部分。', [['Trans-Europe Express','Kraftwerk','1977','电子,krautrock'],['Neu! ’75','Neu!','1975','krautrock,实验摇滚']]],
+      '724': ['西班牙','欧洲', 'flamenco 的张力和独立流行的轻盈同样鲜明。', [['La leyenda del tiempo','Camarón de la Isla','1979','flamenco,融合'],['El mal querer','Rosalía','2018','流行,flamenco']]],
+      '620': ['葡萄牙','欧洲', 'fado 的命运感，至今仍在新一代音乐人的声音里回响。', [['Fado em Mim','Amália Rodrigues','1990','fado,传统'],['Mundo','Mariza','2015','fado,当代']]],
+      '380': ['意大利','欧洲', '电影配乐、前卫摇滚与流行旋律共同形成丰厚的听觉记忆。', [['Rimmel','Francesco De Gregori','1975','创作歌手,意大利流行'],['La voce del padrone','Franco Battiato','1981','艺术流行,电子']]],
+      '752': ['瑞典','欧洲', '旋律写作的极致工艺，连接了流行、金属和电子。', [['Arrival','ABBA','1976','流行,disco'],['Silent Shout','The Knife','2006','电子,实验流行']]],
+      '352': ['冰岛','欧洲', '自然尺度般的声音设计，让流行变成近乎地貌。', [['Homogenic','Björk','1997','实验流行,电子'],['Ágætis byrjun','Sigur Rós','1999','后摇滚,氛围']]],
+      '643': ['俄罗斯','东欧与欧亚', '从民谣诗歌到后苏联独立音乐，始终带着强烈的叙事性。', [['Gruppa krovi','Kino','1988','后朋克,摇滚'],['Zvezdopad','Auktyon','1997','另类摇滚,实验']]],
+      '804': ['乌克兰','东欧与欧亚', '民间旋律与电子、说唱的融合尤其值得追踪。', [['The Book of Secrets','DakhaBrakha','2012','民谣,世界音乐'],['Крила','Jamala','2018','流行,灵魂乐']]],
+      '504': ['摩洛哥','北非', 'gnawa 的循环与 trance 感，是北非最迷人的听觉入口之一。', [['Trance','Hassan Hakmoun','1993','gnawa,世界音乐'],['Mestir','Hoba Hoba Spirit','2010','摇滚,gnawa']]],
+      '466': ['马里','西非', '曼丁音乐与沙漠蓝调，让吉他在这里有了另一段历史。', [['The Mande Variations','Toumani Diabaté','2008','kora,曼丁音乐'],['Talking Timbuktu','Ali Farka Touré','1994','沙漠蓝调,民谣']]],
+      '686': ['塞内加尔','西非', 'mbalax 把沃洛夫节奏推向了现代流行舞池。', [['Immigrés','Youssou N’Dour','1984','mbalax,世界音乐'],['Baol','Orchestra Baobab','2002','afro-cuban,塞内加尔']]],
+      '288': ['加纳','西非', 'highlife 的明亮吉他与舞曲节奏影响了整个西非。', [['Funky Highlife','Ebo Taylor','1977','highlife,afro-funk'],['The Warrior','Osibisa','1971','afro-rock,融合']]],
+      '566': ['尼日利亚','西非', 'Afrobeat、juju 与 Afropop 在这里彼此接力。', [['Zombie','Fela Kuti','1976','afrobeat,政治音乐'],['African Giant','Burna Boy','2019','afropop,afro-fusion'],['Juju Music','King Sunny Adé','1982','juju,worldbeat']]],
+      '180': ['刚果民主共和国','中非', 'soukous 的吉他织体与舞曲能量横跨了非洲大陆。', [['Géant','Papa Wemba','1989','soukous,rumba'],['Muzina','Tabu Ley Rochereau','1988','congolese rumba,流行']]],
+      '231': ['埃塞俄比亚','东非', '独特音阶与爵士编制产生了无法替代的 Ethio-jazz。', [['Mulatu of Ethiopia','Mulatu Astatke','1972','ethio-jazz,爵士'],['Ethiopiques Vol. 21','Emahoy Tsegué-Maryam Guèbrou','2006','钢琴,现代古典']]],
+      '818': ['埃及','北非与中东', '阿拉伯古典歌唱的规模与情感，在这里抵达高峰。', [['Enta Omri','Umm Kulthum','1965','阿拉伯古典,tarab'],['Egyptian Roads','Omar Khairat','2011','电影配乐,器乐']]],
+      '710': ['南非','南部非洲', '爵士、mbaqanga、house 与 amapiano 在城市间持续流动。', [['Graceland','Paul Simon','1986','mbaqanga,世界音乐'],['Black Coffee','Black Coffee','2018','house,电子']]],
+      '422': ['黎巴嫩','中东', '阿拉伯流行、爵士和独立音乐在贝鲁特交叉得很自然。', [['Nassam Alayna el-Hawa','Fairuz','1974','阿拉伯流行,传统'],['Ahla W Sahla','Yasmine Hamdan','2017','独立流行,阿拉伯电子']]],
+      '364': ['伊朗','中东', '诗性歌唱、古典乐器与流亡后的融合创作值得并听。', [['Bi To Be','Googoosh','2000','波斯流行,流行'],['The Rough Guide to the Music of Iran','Various Artists','2010','波斯传统,世界音乐']]],
+      '792': ['土耳其','中东与欧亚', '安纳托利亚民谣、迷幻摇滚与流行彼此渗透。', [['Gönül Dağı','Neşet Ertaş','2000','安纳托利亚民谣,传统'],['Beni Bırakma','Selda Bağcan','1979','迷幻民谣,抗议音乐']]],
+      '356': ['印度','南亚', '电影音乐、古典传统和独立摇滚共同构成巨大的声场。', [['The Essential Ravi Shankar','Ravi Shankar','2002','印度古典,sitar'],['Dil Se..','A. R. Rahman','1998','电影音乐,流行'],['Indian Ocean','Indian Ocean','1993','融合摇滚,民谣']]],
+      '586': ['巴基斯坦','南亚', 'qawwali 的强度与当代融合乐队都极具感染力。', [['Mustt Mustt','Nusrat Fateh Ali Khan','1990','qawwali,世界音乐'],['Coke Studio Pakistan','Various Artists','2008','流行,融合']]],
+      '050': ['孟加拉国','南亚', '孟加拉诗歌传统延续在民谣、摇滚和电影音乐之中。', [['Gaan Baksho','Arnob','2005','创作歌手,民谣'],['Nagar Baul','James','1997','摇滚,孟加拉']]],
+      '156': ['中国','东亚', '摇滚、民谣、电子与方言叙事共同打开了宽阔的当代现场。', [['新长征路上的摇滚','崔健','1989','摇滚,华语'],['天空','王菲','1994','华语流行,梦幻流行'],['冀西南林路行','万能青年旅店','2020','摇滚,独立']]],
+      '392': ['日本','东亚', '从 city pop 到噪音、爵士和电子，日本有极多平行宇宙。', [['Aja','山下达郎','1983','city pop,流行'],['Solid State Survivor','Yellow Magic Orchestra','1979','电子,technopop'],['3.6.5','toe','2015','数学摇滚,器乐']]],
+      '410': ['韩国','东亚', 'K-pop 之外，独立摇滚、爵士与实验电子同样蓬勃。', [['The Land of Morning Calm','Kim Doo Soo','1986','民谣摇滚,韩国'],['Modern Times','IU','2013','流行,jazz pop'],['Be the Cowboy','Yaeji','2017','电子,house']]],
+      '158': ['台湾','东亚', '民歌、摇滚与独立流行之间，有非常成熟的华语表达。', [['真实','张惠妹','2001','华语流行,灵魂乐'],['马戏团','蛋堡','2018','嘻哈,爵士'],['丑奴儿','草东没有派对','2016','另类摇滚,独立']]],
+      '344': ['香港','东亚', '粤语流行的黄金时代与实验独立场景都不可错过。', [['乐与怒','Beyond','1993','粤语摇滚,摇滚'],['Di-Dar','王菲','1995','粤语流行,另类流行']]],
+      '360': ['印度尼西亚','东南亚', 'dangdut、独立流行与迷幻摇滚共同构成群岛的节奏。', [['Badai Pasti Berlalu','Chrisye','1977','流行,印尼'],['Mantra-Mantra','Kunto Aji','2018','独立流行,创作歌手']]],
+      '764': ['泰国','东南亚', '传统 luk thung 和当代独立流行之间有鲜活的连续性。', [['Made in Thailand','Carabao','1984','泰国摇滚,民谣'],['Manchild','Phum Viphurit','2017','独立流行,灵魂乐']]],
+      '704': ['越南','东南亚', '抒情歌曲的传统与新一代独立音乐正在彼此照亮。', [['Diễm Xưa','Khánh Ly','1968','越南流行,抒情'],['Giấc Mơ Của Tôi','Tùng Dương','2010','流行,实验']]],
+      '608': ['菲律宾','东南亚', 'OPM 把吉他流行、灵魂乐和英美影响化成自己的语言。', [['Cutterpillow','Eraserheads','1995','另类摇滚,OPM'],['CLAPCLAPCLAP!','IV of Spades','2017','流行摇滚,放克']]],
+      '036': ['澳大利亚','大洋洲', '车库摇滚、迷幻和电子流行都有很强的当代感。', [['Since I Left You','The Avalanches','2000','采样,电子'],['Currents','Tame Impala','2015','迷幻流行,摇滚']]],
+      '554': ['新西兰','大洋洲', '独立流行和后朋克里常有一种松弛却锋利的质地。', [['Compilation','The Clean','1986','独立摇滚,后朋克'],['True','Avantdale Bowling Club','2018','嘻哈,爵士']]]
+    };
+    const STORAGE = 'sonic-atlas-reviews-v1';
+    const svg = document.querySelector('#map');
+    const detail = document.querySelector('#detail');
+    const hoverCard = document.querySelector('#hoverCard');
+    const mapArea = document.querySelector('.map-area');
+    let activeId = '156';
+    let reviews = loadReviews();
+    let paths = [];
+
+    function keyFor(id, index) { return `${id}-${index}`; }
+    function loadReviews() { try { return JSON.parse(localStorage.getItem(STORAGE)) || {}; } catch { return {}; } }
+    function saveReviews() { localStorage.setItem(STORAGE, JSON.stringify(reviews)); updateProgress(); }
+    function albumEntries() { return Object.entries(regions).flatMap(([id, region]) => region[3].map((album, index) => ({ id, index, album }))); }
+    function updateProgress() { const all = albumEntries(); const count = all.filter(({id,index}) => reviews[keyFor(id,index)]?.done).length; document.querySelector('#progress').textContent = `${count} / ${all.length} 张已听`; }
+    function esc(value) { return String(value).replace(/[&<>"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[char])); }
+    function renderDetail(id) {
+      const region = regions[id];
+      activeId = id;
+      paths.forEach(({id: pathId, node}) => node.classList.toggle('selected', pathId === id));
+      if (!region) { detail.innerHTML = `<div class="empty"><i data-lucide="map-pin" aria-hidden="true"></i><p>这个地区还没有音乐入口。绿色国家已收录推荐，可以先从那里开始。</p></div>`; lucide.createIcons(); return; }
+      const [name, area, note, albums] = region;
+      detail.innerHTML = `<div class="detail-top"><p class="region">${esc(area)}</p><h3>${esc(name)}</h3><p class="note">${esc(note)}</p></div><div class="albums">${albums.map((album,index) => {
+        const [title, artist, year, tagString] = album; const record = reviews[keyFor(id,index)] || {}; const tags = tagString.split(',');
+        return `<article class="album"><div class="album-meta"><div class="album-mark"><i data-lucide="disc-3" aria-hidden="true"></i></div><div class="album-info"><div class="album-title-row"><div><h4>${esc(title)}</h4><p class="artist">${esc(artist)}</p></div><span class="year">${esc(year)}</span></div><div class="tags">${tags.map(tag=>`<span class="tag">${esc(tag)}</span>`).join('')}</div></div></div><label class="review-label" for="review-${id}-${index}"><span>我的一句话</span><span class="done"><input class="done-input" data-id="${id}" data-index="${index}" type="checkbox" ${record.done ? 'checked' : ''}>已听</span></label><textarea id="review-${id}-${index}" class="review-input" data-id="${id}" data-index="${index}" maxlength="140" placeholder="写下此刻的感受…">${esc(record.text || '')}</textarea></article>`;
+      }).join('')}</div>`;
+      detail.querySelectorAll('.review-input').forEach(input => input.addEventListener('input', event => { const {id,index} = event.target.dataset; reviews[keyFor(id,index)] = {...reviews[keyFor(id,index)], text:event.target.value}; saveReviews(); }));
+      detail.querySelectorAll('.done-input').forEach(input => input.addEventListener('change', event => { const {id,index} = event.target.dataset; reviews[keyFor(id,index)] = {...reviews[keyFor(id,index)], done:event.target.checked}; saveReviews(); }));
+      lucide.createIcons();
+    }
+    function showHover(id, event) {
+      const region = regions[id]; if (!region) return;
+      const [name, area,, albums] = region; const first = albums[0];
+      hoverCard.innerHTML = `<strong>${esc(name)} <span>· ${esc(area)}</span></strong><span>${esc(first[0])} · ${esc(first[1])}</span><span>${esc(albums.length)} 张推荐专辑，点击查看</span>`;
+      const rect = mapArea.getBoundingClientRect(); const x = Math.min(event.clientX - rect.left + 14, rect.width - 300); const y = Math.max(14, event.clientY - rect.top - 92);
+      hoverCard.style.left = `${Math.max(14,x)}px`; hoverCard.style.top = `${y}px`; hoverCard.classList.add('show');
+    }
+    function hideHover() { hoverCard.classList.remove('show'); }
+    function toast(message) { const node = document.querySelector('#toast'); node.textContent = message; node.classList.add('show'); clearTimeout(window.toastTimer); window.toastTimer = setTimeout(()=>node.classList.remove('show'), 2200); }
+    function exportReviews() { const blob = new Blob([JSON.stringify({version:1, exportedAt:new Date().toISOString(), reviews}, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'sonic-atlas-reviews.json'; anchor.click(); URL.revokeObjectURL(url); toast('简评已导出'); }
+    async function importReviews(file) { try { const imported = JSON.parse(await file.text()); if (!imported || typeof imported.reviews !== 'object') throw new Error(); reviews = imported.reviews; saveReviews(); renderDetail(activeId); toast('简评已导入'); } catch { toast('未能读取这个备份文件'); } }
+    document.querySelector('#exportButton').addEventListener('click', exportReviews);
+    document.querySelector('#exportText').addEventListener('click', exportReviews);
+    document.querySelector('#importButton').addEventListener('click', () => document.querySelector('#importInput').click());
+    document.querySelector('#importInput').addEventListener('change', event => { if (event.target.files[0]) importReviews(event.target.files[0]); event.target.value = ''; });
+    document.querySelector('#homeButton').addEventListener('click', () => renderDetail('156'));
+    document.querySelector('#clearText').addEventListener('click', () => { if (confirm('确定清空这台设备上的全部简评和已听记录？')) { reviews = {}; saveReviews(); renderDetail(activeId); toast('本地记录已清空'); } });
+
+    async function drawMap() {
+      try {
+        const countries = feature(world, world.objects.countries).features;
+        const width = 1000, height = 570; svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+        const projection = geoNaturalEarth1().fitSize([width - 36, height - 34], {type:'FeatureCollection', features:countries});
+        const path = geoPath(projection); const ns = 'http://www.w3.org/2000/svg';
+        countries.forEach(country => { const id = String(country.id).padStart(3, '0'); const node = document.createElementNS(ns, 'path'); node.setAttribute('d', path(country)); node.setAttribute('class', `country ${regions[id] ? 'has-entry' : 'unavailable'}`); node.setAttribute('data-id', id); node.setAttribute('aria-label', regions[id] ? `${regions[id][0]}，${regions[id][3].length} 张推荐专辑` : '暂未收录'); if (regions[id]) { node.addEventListener('mouseenter', event => showHover(id,event)); node.addEventListener('mousemove', event => showHover(id,event)); node.addEventListener('mouseleave', hideHover); node.addEventListener('click', () => renderDetail(id)); node.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); renderDetail(id); } }); node.setAttribute('tabindex','0'); } svg.appendChild(node); paths.push({id,node}); });
+      } catch (error) { svg.outerHTML = '<div class="empty"><i data-lucide="cloud-off" aria-hidden="true"></i><p>地图边界未能加载。请检查网络后刷新页面。</p></div>'; lucide.createIcons(); }
+    }
+    renderDetail(activeId); updateProgress(); drawMap(); lucide.createIcons();
+  </script>
+</body>
+</html>
