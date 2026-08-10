@@ -106,6 +106,7 @@
     import { geoNaturalEarth1, geoPath } from 'https://esm.sh/d3-geo@3.1.1';
     import { feature } from 'https://esm.sh/topojson-client@3.1.0';
     import world from './assets/countries-110m.json' with { type: 'json' };
+    import sharedReviewData from './reviews.json' with { type: 'json' };
 
     const regions = {
       '840': ['美国','北美', '从蓝调、爵士到灵魂乐与嘻哈的巨大支流。', [['Kind of Blue','Miles Davis','1959','爵士,冷爵士'],['To Pimp a Butterfly','Kendrick Lamar','2015','嘻哈,灵魂乐'],['Blue','Joni Mitchell','1971','创作歌手,民谣']]],
@@ -161,11 +162,15 @@
     const hoverCard = document.querySelector('#hoverCard');
     const mapArea = document.querySelector('.map-area');
     let activeId = '156';
-    let reviews = loadReviews();
+    let reviews = mergeReviews(sharedReviewData.reviews, loadReviews());
     let paths = [];
 
     function keyFor(id, index) { return `${id}-${index}`; }
     function loadReviews() { try { return JSON.parse(localStorage.getItem(STORAGE)) || {}; } catch { return {}; } }
+    function mergeReviews(shared, local) {
+      const keys = new Set([...Object.keys(shared || {}), ...Object.keys(local || {})]);
+      return Object.fromEntries([...keys].map(key => [key, {...(shared?.[key] || {}), ...(local?.[key] || {})}]));
+    }
     function saveReviews() { localStorage.setItem(STORAGE, JSON.stringify(reviews)); updateProgress(); }
     function albumEntries() { return Object.entries(regions).flatMap(([id, region]) => region[3].map((album, index) => ({ id, index, album }))); }
     function updateProgress() { const all = albumEntries(); const count = all.filter(({id,index}) => reviews[keyFor(id,index)]?.done).length; document.querySelector('#progress').textContent = `${count} / ${all.length} 张已听`; }
